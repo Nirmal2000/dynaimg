@@ -34,6 +34,7 @@ export default function RootLayout({ children }) {
           src="https://uicdn.toast.com/tui-image-editor/latest/tui-image-editor.js"
           defer
         />
+        <script src="https://unpkg.com/lucide@latest"></script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${manrope.variable} antialiased`}

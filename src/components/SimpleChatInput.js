@@ -109,7 +109,7 @@ export default function SimpleChatInput() {
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
         onKeyDown={handleKeyPress}
-        placeholder="A vibrance slider"
+        placeholder="Generate a tool..."
         className="bg-transparent text-[#aeaeae] outline-none flex-1 text-lg font-mono resize-none"
         style={{
           wordWrap: "break-word",

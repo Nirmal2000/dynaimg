@@ -45,8 +45,6 @@ export default function Home() {
   // Set up postMessage bridge for TUI API commands
   useEffect(() => {
     const handleMessage = (event) => {
-      console.log('Message received:', event.origin, event.data);
-      
       // Only handle messages from our own origin
       if (event.origin !== window.location.origin) return;
       
@@ -212,9 +210,9 @@ export default function Home() {
           boxShadow: "0px -5px 14.8px 5px rgba(0, 0, 0, 0.08), inset 0px -5px 15.5px 9px rgba(0, 0, 0, 0.09)",
         }}
       >
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col min-h-0">
           {/* ToolBox Header */}
-          <div className="mb-[1.25vw]">
+          <div className="mb-[1.25vw] flex-shrink-0">
             <h2
               className="text-[#aeaeae] text-lg font-medium mb-[0.625vw]"
               style={{ fontFamily: "var(--font-manrope), sans-serif" }}
@@ -225,14 +223,14 @@ export default function Home() {
           </div>
 
           {/* Tool Canvas */}
-          <div className="flex-1">
+          <div className="flex-1 overflow-hidden min-h-0">
             <ToolCanvas />
           </div>
         </div>
 
         {/* Bottom Chat Input */}
         <div
-          className="rounded-[41.5px] px-[1.25vw] py-3 flex items-center justify-between mx-[-40px] w-[118%]"
+          className="rounded-[41.5px] px-[1.25vw] py-3 flex items-center justify-between mx-[-40px] w-[118%] mt-[1.25vw]"
           style={{
             background: "rgba(28, 28, 28, 0.31)",
             boxShadow: "inset 0px 8px 8.4px 1px rgba(0, 0, 0, 0.06)",

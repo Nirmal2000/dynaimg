@@ -23,7 +23,7 @@ export default function ToolCanvas() {
   }
 
   return (
-    <div className="w-full h-full overflow-y-auto">
+    <div className="w-full h-full overflow-y-auto scrollbar-hide">
       <div className="space-y-[1.25vw]">
         {renderedTools.map((tool) => (
           <div key={tool.id} className="relative">
@@ -31,7 +31,7 @@ export default function ToolCanvas() {
             {/* Render tool HTML directly */}
             <div 
               dangerouslySetInnerHTML={{ __html: tool.processedHtml }}
-              className="w-full"
+              className="w-full overflow-hidden"
             />
           </div>
         ))}
