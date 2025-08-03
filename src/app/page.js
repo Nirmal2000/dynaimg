@@ -16,6 +16,11 @@ export default function Home() {
   const [downloadFunction, setDownloadFunction] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Debug selectedImage changes
+  useEffect(() => {
+    console.log('selectedImage changed:', !!selectedImage, typeof selectedImage);
+  }, [selectedImage]);
+
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     
@@ -33,6 +38,7 @@ export default function Home() {
     // Create a FileReader to read the file
     const reader = new FileReader();
     reader.onload = (e) => {
+      console.log('Image loaded, setting selectedImage:', !!e.target.result);
       setSelectedImage(e.target.result);
     };
     reader.readAsDataURL(file);
@@ -104,6 +110,65 @@ export default function Home() {
           case 'crop':
             if (payload?.rect) {
               imageEditorRef.current.crop(payload.rect);
+            }
+            break;
+          case 'getImageData':
+            console.log('getImageData request:', {
+              hasImageEditor: !!imageEditorRef.current,
+              hasSelectedImage: !!selectedImage,
+              selectedImageValue: selectedImage,
+              selectedImageType: typeof selectedImage,
+              editorMethods: imageEditorRef.current ? Object.keys(imageEditorRef.current) : 'none'
+            });
+            
+            // Remove selectedImage check since we confirmed it works  
+            try {
+                // Try different methods to get canvas
+                let canvas = null;
+                
+                if (imageEditorRef.current?.getCanvasElement) {
+                  canvas = imageEditorRef.current.getCanvasElement();
+                } else if (imageEditorRef.current?._graphics?.getCanvas) {
+                  canvas = imageEditorRef.current._graphics.getCanvas();
+                } else if (imageEditorRef.current?.ui?.getCanvas) {
+                  canvas = imageEditorRef.current.ui.getCanvas();
+                }
+                
+                console.log('Canvas found:', !!canvas);
+                
+                if (!canvas) {
+                  // Fallback: look for canvas in DOM
+                  const canvasElements = document.querySelectorAll('canvas');
+                  console.log('Found canvases in DOM:', canvasElements.length);
+                  canvas = canvasElements[canvasElements.length - 1]; // Get the last (likely TUI) canvas
+                }
+                
+                if (!canvas) {
+                  console.warn('No canvas found anywhere');
+                  return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                console.log('Sending image data:', {
+                  width: canvas.width, 
+                  height: canvas.height, 
+                  dataLength: imageData.data.length
+                });
+                
+                window.postMessage({
+                  type: 'imageDataResponse',
+                  payload: {
+                    data: Array.from(imageData.data),
+                    width: canvas.width,
+                    height: canvas.height,
+                    requestId: payload?.requestId || 'default'
+                  }
+                }, '*');
+            } catch (error) {
+              console.error('Error getting image data:', error);
+              return;
             }
             break;
           default:

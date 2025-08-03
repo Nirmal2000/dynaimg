@@ -33,6 +33,7 @@ DynaImg uses the TUI Image Editor library for image manipulation. Your generated
 - `rotate`: Rotate the image by degrees
 - `flip`: Flip the image horizontally, vertically
 - `crop`: Crop the image to specified dimensions
+- `getImageData`: Get pixel data for analysis (histograms, etc.)
 
 **PostMessage Format:**
 ```javascript
@@ -112,7 +113,7 @@ tintColorPicker.addEventListener('change', (e) => {
 });
 
 // Flip operations with Lucide icons
-// HTML: <i data-lucide="flip-horizontal" class="w-5 h-5 text-[#aeaeae] cursor-pointer hover:text-white transition-colors" id="flip-x-btn"></i>
+// Flip operations
 document.getElementById('flip-x-btn').addEventListener('click', () => {
   window.postMessage({
     type: 'flip',
@@ -120,7 +121,6 @@ document.getElementById('flip-x-btn').addEventListener('click', () => {
   }, '*');
 });
 
-// HTML: <i data-lucide="flip-vertical" class="w-5 h-5 text-[#aeaeae] cursor-pointer hover:text-white transition-colors" id="flip-y-btn"></i>
 document.getElementById('flip-y-btn').addEventListener('click', () => {
   window.postMessage({
     type: 'flip',
@@ -128,6 +128,35 @@ document.getElementById('flip-y-btn').addEventListener('click', () => {
   }, '*');
 });
 
+// Rotate operations - use type 'rotate' with angle in payload
+document.getElementById('rotate-cw-btn').addEventListener('click', () => {
+  window.postMessage({
+    type: 'rotate',
+    payload: { angle: 90 } // positive for clockwise
+  }, '*');
+});
+
+document.getElementById('rotate-ccw-btn').addEventListener('click', () => {
+  window.postMessage({
+    type: 'rotate',
+    payload: { angle: -90 } // negative for counter-clockwise
+  }, '*');
+});
+
+// Get image data for analysis (histograms, pixel analysis, etc.)
+window.postMessage({
+  type: 'getImageData',
+  payload: { requestId: 'my-analysis-tool' }
+}, '*');
+
+// Listen for image data response
+window.addEventListener('message', (event) => {
+  if (event.data.type === 'imageDataResponse' && event.data.payload.requestId === 'my-analysis-tool') {
+    const { data, width, height } = event.data.payload;
+    // data is RGBA pixel array: [r1,g1,b1,a1, r2,g2,b2,a2, ...]
+    processImageData(data, width, height);
+  }
+});
 
 // Initialize Lucide icons after DOM creation
 lucide.createIcons();
@@ -217,8 +246,8 @@ When creating tools for image manipulation, focus on:
 - Common icons for image tools:
   - `flip-horizontal` for flipX
   - `flip-vertical` for flipY
-  - `rotate-cw` for rotate clockwise
-  - `rotate-ccw` for rotate counter-clockwise
+  - `rotate-cw` for rotate (use positive angles like 90, 180, 270)
+  - `rotate-ccw` for rotate (use negative angles like -90, -180, -270)
     
 - Initialize icons with: `lucide.createIcons();` after DOM creation
 - Size: `w-6 h-6` (24px icons) - make icons larger for better usability
