@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useToolContext } from '../contexts/ToolContext';
 
 export default function SimpleChatInput() {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { addTool } = useToolContext();
 
   // Extract code blocks from message content
-  const extractCodeBlocks = (content) => {
+  const extractCodeBlocks = useCallback((content) => {
     const codeBlockRegex = /```(?:html|javascript|js|css)?\n?([\s\S]*?)```/g;
     const blocks = [];
     let match;
@@ -21,31 +23,28 @@ export default function SimpleChatInput() {
     }
     
     return blocks;
-  };
+  }, []);
 
   // Find largest code block by character count
-  const findLargestCodeBlock = (codeBlocks) => {
+  const findLargestCodeBlock = useCallback((codeBlocks) => {
     if (codeBlocks.length === 0) return null;
     
     return codeBlocks.reduce((largest, current) => 
       current.code.length > largest.code.length ? current : largest
     );
-  };
+  }, []);
 
   // Auto-render the largest code block
-  const autoRenderLargestBlock = (content) => {
+  const autoRenderLargestBlock = useCallback((content) => {
     const codeBlocks = extractCodeBlocks(content);
     const largestBlock = findLargestCodeBlock(codeBlocks);
     
     if (largestBlock) {
       const toolId = `auto-${Date.now()}`;
-      
-      // Dispatch custom event to ToolCanvas
-      window.dispatchEvent(new CustomEvent('renderTool', {
-        detail: { code: largestBlock.code, id: toolId }
-      }));
+      // Use React context instead of global events
+      addTool(largestBlock.code, toolId);
     }
-  };
+  }, [addTool, extractCodeBlocks, findLargestCodeBlock]);
 
   // Handle chat message submission
   const handleSendMessage = useCallback(async () => {
@@ -104,35 +103,34 @@ export default function SimpleChatInput() {
   }, [handleSendMessage]);
 
   return (
-    <div className="h-full flex flex-col bg-gray-800 border-t border-gray-700">
-      {/* Simple Chat Input - No History Display */}
-      <div className="p-4">
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyPress}
-            placeholder="Ask for a tool or code example..."
-            className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={isLoading}
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!inputValue.trim() || isLoading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? (
-              <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Send</span>
-              </div>
-            ) : (
-              'Send'
-            )}
-          </button>
-        </div>
-      </div>
+    <div className="w-full flex items-center space-x-2">
+      <input
+        type="text"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyPress}
+        placeholder="A vibrance slider"
+        className="bg-transparent text-[#aeaeae] outline-none flex-1 text-lg font-mono resize-none"
+        style={{
+          wordWrap: "break-word",
+          fontFamily: "var(--font-manrope), monospace"
+        }}
+        disabled={isLoading}
+      />
+      <button
+        onClick={handleSendMessage}
+        disabled={!inputValue.trim() || isLoading}
+        className="text-[#aeaeae] hover:text-white transition-colors flex-shrink-0"
+        title="Generate tool"
+      >
+        {isLoading ? (
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#aeaeae]"></div>
+        ) : (
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        )}
+      </button>
     </div>
   );
 }

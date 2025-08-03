@@ -14,8 +14,8 @@ export default function ImagePanel({ selectedImage, onUploadClick, error, onEdit
 
       // Initialize TUI Image Editor using global tui object
       imageEditorRef.current = new window.tui.ImageEditor(editorContainerRef.current, {
-        cssMaxWidth: 400,
-        cssMaxHeight: 300,
+        cssMaxWidth: 800,
+        cssMaxHeight: 600,
         selectionStyle: {
           cornerSize: 20,
           rotatingPointOffset: 70
@@ -45,11 +45,13 @@ export default function ImagePanel({ selectedImage, onUploadClick, error, onEdit
 
   if (selectedImage) {
     return (
-      <div className="w-full h-full relative">
+      <div className="relative h-[56vh] bg-[#515050] rounded-[2.875rem] border-[0.625rem] border-[#515050] overflow-hidden w-[60vw]"
+           style={{
+             boxShadow: "0px -5px 17.9px 5px rgba(0,0,0,0.18)"
+           }}>
         <div
           ref={editorContainerRef}
-          className="w-full h-full"
-          style={{ minHeight: '400px' }}
+          className="w-full h-full flex items-center justify-center"
         />
         <button
           onClick={onUploadClick}
@@ -62,7 +64,10 @@ export default function ImagePanel({ selectedImage, onUploadClick, error, onEdit
   }
 
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center">
+    <div className="relative h-[56vh] bg-[#515050] rounded-[2.875rem] border-[0.625rem] border-[#515050] overflow-hidden w-[60vw] flex flex-col items-center justify-center"
+         style={{
+           boxShadow: "0px -5px 17.9px 5px rgba(0,0,0,0.18)"
+         }}>
       <div className="text-center">
         <div className="mb-6">
           <svg className="w-16 h-16 mx-auto text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
