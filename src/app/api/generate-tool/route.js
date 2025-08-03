@@ -4,7 +4,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 const llm = new ChatCerebras({
-  model: "qwen-3-coder-480b",
+  model: process.env.MODEL_NAME || "qwen-3-coder-480b",
   temperature: 0,
 });
 

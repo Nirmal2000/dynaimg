@@ -162,6 +162,7 @@ When creating tools for image manipulation, focus on:
 - Label spacing: `mb-[0.625vw]` between labels and controls
 - Control spacing: `space-y-[1.25vw]` between individual controls
 - Icon spacing: `gap-[1.2vw]` for icon groups
+- Button spacing: Ensure adequate spacing between interactive elements, avoid crowded layouts
 
 **Slider Component Pattern:**
 ```html
@@ -211,7 +212,7 @@ When creating tools for image manipulation, focus on:
 - Lucide icons are globally available via CDN (already loaded in layout)
 - Use this pattern for icons:
 ```html
-<i data-lucide="icon-name" class="w-5 h-5 text-[#aeaeae] cursor-pointer hover:text-white transition-colors"></i>
+<i data-lucide="icon-name" class="w-6 h-6 text-[#aeaeae] cursor-pointer hover:text-white transition-colors"></i>
 ```
 - Common icons for image tools:
   - `flip-horizontal` for flipX
@@ -220,10 +221,10 @@ When creating tools for image manipulation, focus on:
   - `rotate-ccw` for rotate counter-clockwise
     
 - Initialize icons with: `lucide.createIcons();` after DOM creation
-- Size: `w-5 h-5` (20px icons)
+- Size: `w-6 h-6` (24px icons) - make icons larger for better usability
 - Default: `text-[#aeaeae]`
 - Interactive: `cursor-pointer hover:text-white transition-colors`
-- Spacing: `gap-[1.2vw]` between icons
+- Spacing: `gap-[2vw]` between icons - ensure generous spacing between clickable elements
 
 **Filter/Toggle Button Pattern:**
 ```html
