@@ -1,47 +1,15 @@
 'use client';
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect } from 'react';
+import { useImageContext } from '../contexts/ImageContext';
 
-export default function ImagePanel({ selectedImage, onUploadClick, error, onEditorRef }) {
-  const editorContainerRef = useRef(null);
-  const imageEditorRef = useRef(null);
-
-  const initializeEditor = useCallback(async () => {
-    if (selectedImage && editorContainerRef.current && window.tui) {
-      // Clean up existing editor
-      if (imageEditorRef.current) {
-        imageEditorRef.current.destroy();
-      }
-
-      // Initialize TUI Image Editor using global tui object
-      imageEditorRef.current = new window.tui.ImageEditor(editorContainerRef.current, {
-        cssMaxWidth: 800,
-        cssMaxHeight: 600,
-        selectionStyle: {
-          cornerSize: 20,
-          rotatingPointOffset: 70
-        }
-      });
-
-      // Load the image
-      imageEditorRef.current.loadImageFromURL(selectedImage, 'UserImage');
-
-      // Pass the editor reference to parent
-      if (onEditorRef) {
-        onEditorRef(imageEditorRef.current);
-      }
-    }
-  }, [selectedImage, onEditorRef]);
+export default function ImagePanel({ onUploadClick, error }) {
+  const { selectedImage, setCanvasRef, loadImageToCanvas } = useImageContext();
 
   useEffect(() => {
-    initializeEditor();
-
-    return () => {
-      if (imageEditorRef.current) {
-        imageEditorRef.current.destroy();
-        imageEditorRef.current = null;
-      }
-    };
-  }, [initializeEditor]);
+    if (selectedImage) {
+      loadImageToCanvas(selectedImage);
+    }
+  }, [selectedImage, loadImageToCanvas]);
 
   if (selectedImage) {
     return (
@@ -49,10 +17,12 @@ export default function ImagePanel({ selectedImage, onUploadClick, error, onEdit
            style={{
              boxShadow: "0px -5px 17.9px 5px rgba(0,0,0,0.18)"
            }}>
-        <div
-          ref={editorContainerRef}
-          className="w-full h-full flex items-center justify-center"
-        />
+        <div className="w-full h-full flex items-center justify-center">
+          <canvas
+            ref={setCanvasRef}
+            className="max-w-full max-h-full rounded-lg"
+          />
+        </div>
         <button
           onClick={onUploadClick}
           className="absolute top-2 right-2 bg-black bg-opacity-50 text-white px-3 py-1 rounded text-sm hover:bg-opacity-70 transition-all z-10"

@@ -1,25 +1,26 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useImageContext } from '../contexts/ImageContext';
 
-export default function TextAreaPanel({ imageEditorRef, onEditImage, onDownload, onProcessingChange }) {
+export default function TextAreaPanel({ onEditImage, onDownload }) {
+  const { canvasEditor, isProcessing, setIsProcessing, updateCanvasImage } = useImageContext();
   const [textValue, setTextValue] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState('');
 
   // Handle sending text to Fal AI for image editing
   const handleSendText = useCallback(async () => {
     if (!textValue.trim() || isProcessing) return;
     
-    // Check if image editor exists and has an image
-    if (!imageEditorRef?.current) {
-      setStatus('No image editor available');
+    // Check if canvas editor exists and has an image
+    if (!canvasEditor?.canvas) {
+      setStatus('No image available');
       return;
     }
 
     try {
-      // Get current image from TUI editor
-      const currentImageDataUrl = imageEditorRef.current.toDataURL();
+      // Get current image from canvas
+      const currentImageDataUrl = canvasEditor.toDataURL();
       
       if (!currentImageDataUrl || currentImageDataUrl === 'data:,') {
         setStatus('Please load an image first');
@@ -44,10 +45,10 @@ export default function TextAreaPanel({ imageEditorRef, onEditImage, onDownload,
       const data = await response.json();
 
       if (data.success) {
-        // Replace image in TUI editor using the same method as ImagePanel
+        // Replace image in canvas using ImageContext
         try {
-          console.log('Loading new image into TUI editor...');
-          await imageEditorRef.current.loadImageFromURL(data.imageDataUrl, 'UserImage');
+          console.log('Loading new image into canvas...');
+          updateCanvasImage(data.imageDataUrl);
           
           setStatus('Image edited successfully!');
           // setTextValue(''); // Clear the prompt
@@ -71,18 +72,18 @@ export default function TextAreaPanel({ imageEditorRef, onEditImage, onDownload,
     } finally {
       setIsProcessing(false);
     }
-  }, [textValue, imageEditorRef, isProcessing]);
+  }, [textValue, canvasEditor, isProcessing, setIsProcessing, updateCanvasImage]);
 
-  // Handle downloading the current image from TUI editor
+  // Handle downloading the current image from canvas
   const handleDownload = useCallback(() => {
-    if (!imageEditorRef?.current) {
-      console.warn('No image editor available for download');
+    if (!canvasEditor?.canvas) {
+      console.warn('No canvas available for download');
       return;
     }
 
     try {
-      // Get image data from TUI editor
-      const dataURL = imageEditorRef.current.toDataURL();
+      // Get image data from canvas
+      const dataURL = canvasEditor.toDataURL();
       
       // Create download link
       const link = document.createElement('a');
@@ -97,7 +98,7 @@ export default function TextAreaPanel({ imageEditorRef, onEditImage, onDownload,
     } catch (error) {
       console.error('Error downloading image:', error);
     }
-  }, [imageEditorRef]);
+  }, [canvasEditor]);
 
   // Pass functions to parent component
   useEffect(() => {
@@ -108,13 +109,6 @@ export default function TextAreaPanel({ imageEditorRef, onEditImage, onDownload,
       onDownload(handleDownload);
     }
   }, [handleSendText, handleDownload, onEditImage, onDownload]);
-
-  // Notify parent about processing state changes
-  useEffect(() => {
-    if (onProcessingChange) {
-      onProcessingChange(isProcessing);
-    }
-  }, [isProcessing, onProcessingChange]);
 
 
   return (

@@ -1,25 +1,19 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import ImagePanel from '../components/ImagePanel';
 import TextAreaPanel from '../components/TextAreaPanel';
 import ToolCanvas from '../components/ToolCanvas';
 import SimpleChatInput from '../components/SimpleChatInput';
 import { ToolProvider } from '../contexts/ToolContext';
+import { ImageProvider, useImageContext } from '../contexts/ImageContext';
 
-export default function Home() {
-  const [selectedImage, setSelectedImage] = useState(null);
+function HomeContent() {
+  const { setSelectedImage, isProcessing } = useImageContext();
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
-  const imageEditorRef = useRef(null);
   const [editImageFunction, setEditImageFunction] = useState(null);
   const [downloadFunction, setDownloadFunction] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  // Debug selectedImage changes
-  useEffect(() => {
-    console.log('selectedImage changed:', !!selectedImage, typeof selectedImage);
-  }, [selectedImage]);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -47,148 +41,6 @@ export default function Home() {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
-
-  // Set up postMessage bridge for TUI API commands
-  useEffect(() => {
-    const handleMessage = (event) => {
-      // Only handle messages from our own origin
-      if (event.origin !== window.location.origin) return;
-      
-      const { type, payload } = event.data;
-      if (!imageEditorRef.current || !type) return;
-
-      try {
-        switch (type) {
-          case 'applyFilter':
-            if (payload?.filterType && typeof payload.apply !== 'undefined') {
-              const { apply, filterType, options = {} } = payload;
-              
-              // Map filter names to TUI internal types
-              const filterNameMap = {
-                'brightness': 'brightness',
-                'blur': 'blur', 
-                'noise': 'noise',
-                'pixelate': 'pixelate',
-                'removeColor': 'removeColor',
-                'blendColor': 'blendColor',
-                'grayscale': 'grayscale',
-                'invert': 'invert',
-                'sepia': 'sepia',
-                'vintage': 'vintage',
-                'sharpen': 'sharpen',
-                'emboss': 'emboss'
-              };
-              
-              const tuiFilterType = filterNameMap[filterType] || filterType;
-              
-              if (apply) {
-                imageEditorRef.current.applyFilter(tuiFilterType, options);
-              } else {
-                imageEditorRef.current.removeFilter(tuiFilterType);
-              }
-            }
-            break;
-          case 'resize':
-            if (payload?.width && payload?.height) {
-              imageEditorRef.current.resize({ width: payload.width, height: payload.height });
-            }
-            break;
-          case 'rotate':
-            if (typeof payload?.angle !== 'undefined') {
-              imageEditorRef.current.rotate(payload.angle);
-            }
-            break;
-          case 'flip':
-            if (payload?.flipType) {
-              if (payload.flipType === 'flipX') {
-                imageEditorRef.current.flipX();
-              } else if (payload.flipType === 'flipY') {
-                imageEditorRef.current.flipY();
-              }
-            }
-            break;
-          case 'crop':
-            if (payload?.rect) {
-              imageEditorRef.current.crop(payload.rect);
-            }
-            break;
-          case 'getImageData':
-            console.log('getImageData request:', {
-              hasImageEditor: !!imageEditorRef.current,
-              hasSelectedImage: !!selectedImage,
-              selectedImageValue: selectedImage,
-              selectedImageType: typeof selectedImage,
-              editorMethods: imageEditorRef.current ? Object.keys(imageEditorRef.current) : 'none'
-            });
-            
-            // Remove selectedImage check since we confirmed it works  
-            try {
-                // Try different methods to get canvas
-                let canvas = null;
-                
-                if (imageEditorRef.current?.getCanvasElement) {
-                  canvas = imageEditorRef.current.getCanvasElement();
-                } else if (imageEditorRef.current?._graphics?.getCanvas) {
-                  canvas = imageEditorRef.current._graphics.getCanvas();
-                } else if (imageEditorRef.current?.ui?.getCanvas) {
-                  canvas = imageEditorRef.current.ui.getCanvas();
-                }
-                
-                console.log('Canvas found:', !!canvas);
-                
-                if (!canvas) {
-                  // Fallback: look for canvas in DOM
-                  const canvasElements = document.querySelectorAll('canvas');
-                  console.log('Found canvases in DOM:', canvasElements.length);
-                  canvas = canvasElements[canvasElements.length - 1]; // Get the last (likely TUI) canvas
-                }
-                
-                if (!canvas) {
-                  console.warn('No canvas found anywhere');
-                  return;
-                }
-                
-                const ctx = canvas.getContext('2d');
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                console.log('Sending image data:', {
-                  width: canvas.width, 
-                  height: canvas.height, 
-                  dataLength: imageData.data.length
-                });
-                
-                window.postMessage({
-                  type: 'imageDataResponse',
-                  payload: {
-                    data: Array.from(imageData.data),
-                    width: canvas.width,
-                    height: canvas.height,
-                    requestId: payload?.requestId || 'default'
-                  }
-                }, '*');
-            } catch (error) {
-              console.error('Error getting image data:', error);
-              return;
-            }
-            break;
-          default:
-            console.warn('Unknown TUI API command:', type);
-        }
-      } catch (error) {
-        console.error('Error executing TUI API command:', error);
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    
-    return () => {
-      window.removeEventListener('message', handleMessage);
-    };
-  }, []);
-
-  const handleEditorRef = useCallback((editor) => {
-    imageEditorRef.current = editor;
-  }, []);
 
   const onEditImageCallback = useCallback((func) => {
     setEditImageFunction(() => func);
@@ -218,20 +70,16 @@ export default function Home() {
         {/* Image Container */}
         <div className="mb-[1.25vw]">
           <ImagePanel 
-            selectedImage={selectedImage}
             onUploadClick={handleUploadClick}
             error={error}
-            onEditorRef={handleEditorRef}
           />
         </div>
 
         {/* Description Area */}
         <div className="mb-[4vw]">
           <TextAreaPanel 
-            imageEditorRef={imageEditorRef}
             onEditImage={onEditImageCallback}
             onDownload={onDownloadCallback}
-            onProcessingChange={setIsProcessing}
           />
         </div>
 
@@ -307,5 +155,15 @@ export default function Home() {
       </div>
       </div>
     </ToolProvider>
+  );
+}
+
+export default function Home() {
+  return (
+    <ImageProvider>
+      <ToolProvider>
+        <HomeContent />
+      </ToolProvider>
+    </ImageProvider>
   );
 }

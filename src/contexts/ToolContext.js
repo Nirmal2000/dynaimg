@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 
 const ToolContext = createContext();
 
@@ -14,7 +14,9 @@ export const useToolContext = () => {
 
 export const ToolProvider = ({ children }) => {
   const [renderedTools, setRenderedTools] = useState([]);
-  const [executedScripts, setExecutedScripts] = useState(new Set());
+  // Use useRef to persist executedScripts across rerenders
+  const executedScriptsRef = useRef(new Set());
+  const toolScriptsRef = useRef(new Map()); // Store scripts for re-execution
 
   // Add a new tool to the canvas
   const addTool = useCallback((code, id = `tool-${Date.now()}`) => {
@@ -39,7 +41,8 @@ export const ToolProvider = ({ children }) => {
   // Clear all tools
   const clearTools = useCallback(() => {
     setRenderedTools([]);
-    setExecutedScripts(new Set()); // Clear script tracking when clearing tools
+    executedScriptsRef.current = new Set(); // Clear script tracking when clearing tools
+    toolScriptsRef.current = new Map(); // Clear stored scripts
   }, []);
 
   // Process HTML code to extract and adapt content for seamless integration
@@ -72,18 +75,31 @@ export const ToolProvider = ({ children }) => {
       // Extract body content
       const bodyContent = doc.body.innerHTML;
       
-      // Execute JavaScript only once per tool, after DOM is ready
-      if (jsCode && !executedScripts.has(toolId)) {
-        setExecutedScripts(prev => new Set([...prev, toolId]));
-        setTimeout(() => {
-          try {
-            // Wrap in IIFE to create scope isolation
-            const wrappedCode = `(function() { ${jsCode} })();`;
-            eval(wrappedCode);
-          } catch (error) {
-            console.error(`Error executing tool script for ${toolId}:`, error);
-          }
-        }, 100);
+      // Store script for potential re-execution and execute if not already executed
+      if (jsCode) {
+        toolScriptsRef.current.set(toolId, jsCode);
+        if (!executedScriptsRef.current.has(toolId)) {
+          executedScriptsRef.current.add(toolId);
+          setTimeout(() => {
+            try {
+              // Wrap in IIFE to create scope isolation
+              const wrappedCode = `(function() { ${jsCode} })();`;
+              eval(wrappedCode);
+            } catch (error) {
+              console.error(`Error executing tool script for ${toolId}:`, error);
+            }
+          }, 100);
+        } else {
+          // Re-execute script for rerendered tools
+          setTimeout(() => {
+            try {
+              const wrappedCode = `(function() { ${jsCode} })();`;
+              eval(wrappedCode);
+            } catch (error) {
+              console.error(`Error re-executing tool script for ${toolId}:`, error);
+            }
+          }, 100);
+        }
       }
       
       // Combine with integrated styling
@@ -98,18 +114,31 @@ export const ToolProvider = ({ children }) => {
         ${bodyContent}
       `;
     } else {
-      // Execute JavaScript only once per tool, after DOM is ready
-      if (jsCode && !executedScripts.has(toolId)) {
-        setExecutedScripts(prev => new Set([...prev, toolId]));
-        setTimeout(() => {
-          try {
-            // Wrap in IIFE to create scope isolation
-            const wrappedCode = `(function() { ${jsCode} })();`;
-            eval(wrappedCode);
-          } catch (error) {
-            console.error(`Error executing tool script for ${toolId}:`, error);
-          }
-        }, 100);
+      // Store script for potential re-execution and execute if not already executed
+      if (jsCode) {
+        toolScriptsRef.current.set(toolId, jsCode);
+        if (!executedScriptsRef.current.has(toolId)) {
+          executedScriptsRef.current.add(toolId);
+          setTimeout(() => {
+            try {
+              // Wrap in IIFE to create scope isolation
+              const wrappedCode = `(function() { ${jsCode} })();`;
+              eval(wrappedCode);
+            } catch (error) {
+              console.error(`Error executing tool script for ${toolId}:`, error);
+            }
+          }, 10);
+        } else {
+          // Re-execute script for rerendered tools
+          setTimeout(() => {
+            try {
+              const wrappedCode = `(function() { ${jsCode} })();`;
+              eval(wrappedCode);
+            } catch (error) {
+              console.error(`Error re-executing tool script for ${toolId}:`, error);
+            }
+          }, 10);
+        }
       }
       
       // If it's just body content, wrap it with basic styling
@@ -122,7 +151,7 @@ export const ToolProvider = ({ children }) => {
         ${htmlWithoutScripts}
       `;
     }
-  }, [executedScripts, setExecutedScripts]);
+  }, []);
 
   const value = {
     renderedTools,
