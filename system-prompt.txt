@@ -35,6 +35,8 @@ Always work from original image data to prevent quality degradation. These are r
 **2. Destructive Transformations (Flip, Rotate, Crop, Resize)**  
 These permanently modify the image and should update the original baseline afterward.
 
+**IMPORTANT: Always include these helper functions in every tool that does image processing:**
+
 ```javascript
 // Store original image data globally (declare at top of script)
 let originalImageData = null;
