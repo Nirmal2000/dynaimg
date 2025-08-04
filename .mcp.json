@@ -8,7 +8,7 @@
       ],
       "env": {
         "PATH": "/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:~/.local/bin",
-        "GEMINI_API_KEY": "AIzaSyDAn1lSYCD6-BzxqNU4lfIO0feK99zji8o"
+        "GEMINI_API_KEY": ""
       }
     }
   }
